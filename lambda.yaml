@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda function for CCE Challenge
+
+Parameters:
+  DataTableName:
+    Type: String
+  DataTableArn:
+    Type: String
+
+Resources:
+  StoreDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: store_data.handler
+      Runtime: python3.9
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+          import os
+          dynamodb = boto3.resource("dynamodb")
+          table = dynamodb.Table(os.environ["TABLE_NAME"])
+          def handler(event, context):
+              try:
+                  body = json.loads(event["body"])
+                  item = {"id": str(uuid.uuid4()), **body}
+                  table.put_item(Item=item)
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps({"message": "Data stored successfully", "id": item["id"]})
+                  }
+              except Exception as e:
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": str(e)})
+                  }
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DataTableName
+      Role: !ImportValue !Sub ${AWS::StackName}-StoreDataFunctionRoleArn
+      Timeout: 30
+
+Outputs:
+  StoreDataFunctionArn:
+    Value: !GetAtt StoreDataFunction.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-StoreDataFunctionArn

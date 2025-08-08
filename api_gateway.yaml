@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway for CCE Challenge
+
+Parameters:
+  StoreDataFunctionArn:
+    Type: String
+
+Resources:
+  DataApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: DataApi
+      Description: API for CCE Challenge
+
+  DataResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref DataApi
+      ParentId: !GetAtt DataApi.RootResourceId
+      PathPart: data
+
+  DataPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref DataApi
+      ResourceId: !Ref DataResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StoreDataFunctionArn}/invocations
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: ''
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+
+  ApiGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref StoreDataFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${DataApi}/*/POST/data
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref DataApi
+    DependsOn:
+      - DataPostMethod
+
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref DataApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: prod
+
+Outputs:
+  ApiEndpoint:
+    Value: !Sub https://${DataApi}.execute-api.${AWS::Region}.amazonaws.com/prod/data
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiEndpoint
