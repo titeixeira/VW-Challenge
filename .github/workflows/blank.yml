@@ -1,0 +1,68 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci-cd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pylint
+        run: pylint store_data.py
+
+      - name: Run tests
+        run: pytest tests/
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Validate CloudFormation templates
+        run: |
+          aws cloudformation validate-template --template-body file://dynamodb.yaml
+          aws cloudformation validate-template --template-body file://lambda.yaml
+          aws cloudformation validate-template --template-body file://api_gateway.yaml
+          aws cloudformation validate-template --template-body file://iam_roles.yaml
+
+      - name: Upload to Artifactory
+        uses: jfrog/setup-jfrog-cli@v3
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+        run: |
+          jf push dynamodb.yaml <artifactory-repo>/cce-challenge/
+          jf push lambda.yaml <artifactory-repo>/cce-challenge/
+          jf push api_gateway.yaml <artifactory-repo>/cce-challenge/
+          jf push iam_roles.yaml <artifactory-repo>/cce-challenge/
+
+      - name: Deploy to AWS
+        run: aws cloudformation deploy --template-file master.yaml --stack-name CceChallengeStack --capabilities CAPABILITY_IAM
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          slack-bot-token: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel-id: 'devops'
+          slack-text: 'CI/CD completed: ${{ github.event_name }} on ${{ github.repository }}'
