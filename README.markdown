@@ -22,10 +22,10 @@ This project implements an AWS-based solution for the CCE technical challenge us
 
 ## Deployment
 1. In a AWS account, go to CloudFormation Service and select create Stack
- 1.1 Start with the dynamodb.yaml
- 1.2 Then the iam_roles.yaml and give the parameters given by the dynamodb.yaml Output
- 1.3 Then the lambda.yaml and give the parameters given by the dynamodb.yaml Output
- 1.4 Then the api_gateway.yaml and give the parameters given by the lambda.yaml Output   
+2. Start with the dynamodb.yaml
+3. Then the iam_roles.yaml and give the parameters given by the dynamodb.yaml Output
+4. Then the lambda.yaml and give the parameters given by the dynamodb.yaml Output
+5. Then the api_gateway.yaml and give the parameters given by the lambda.yaml Output   
 
 ## Testing
 - Send a POST request to the API endpoint with a JSON body:
