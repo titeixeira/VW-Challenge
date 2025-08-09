@@ -21,7 +21,7 @@ This project implements an AWS-based solution for the CCE technical challenge us
    ```
 
 ## Deployment
-1. In a AWS account, go to CloudFormation Service and select create Stack
+1. In a AWS account, go to CloudFormation Service and select create Stack ( Should be CceChallengeStack)
 2. Start with the dynamodb.yaml
 3. Then the iam_roles.yaml and give the parameters given by the dynamodb.yaml Output
 4. Then the lambda.yaml and give the parameters given by the dynamodb.yaml Output
