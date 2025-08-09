@@ -36,4 +36,4 @@ Outputs:
   StoreDataFunctionRoleArn:
     Value: !GetAtt StoreDataFunctionRole.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-StoreDataFunctionRoleArn
+      Name: CceChallengeStack-StoreDataFunctionRoleArn

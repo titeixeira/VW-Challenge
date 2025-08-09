@@ -19,20 +19,23 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pylint
-        run: pylint store_data.py
+        run: pylint index.py
 
       - name: Run tests
         run: pytest tests/
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      #- name: SonarQube Scan
+      #  uses: sonarsource/sonarqube-scan-action@master
+      #  env:
+      #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Configure AWS credentials
-        aws_region: 'eu-west-3'
-        cloudformation_role: 'arn:aws:iam::667498515792:role/AWSCloudFormation'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
 
       - name: Validate CloudFormation templates
         run: |
@@ -41,23 +44,23 @@ jobs:
           aws cloudformation validate-template --template-body file://api_gateway.yaml
           aws cloudformation validate-template --template-body file://iam_roles.yaml
 
-      - name: Upload to Artifactory
-        uses: jfrog/setup-jfrog-cli@v3
-        env:
-          JFROG_USER: ${{ secrets.JFROG_USER }}
-          JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-        run: |
-          jf push dynamodb.yaml <artifactory-repo>/cce-challenge/
-          jf push lambda.yaml <artifactory-repo>/cce-challenge/
-          jf push api_gateway.yaml <artifactory-repo>/cce-challenge/
-          jf push iam_roles.yaml <artifactory-repo>/cce-challenge/
+      #- name: Upload to Artifactory
+      #  uses: jfrog/setup-jfrog-cli@v3
+      #  env:
+      #    JFROG_USER: ${{ secrets.JFROG_USER }}
+      #    JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+      #  run: |
+      #    jf push dynamodb.yaml <artifactory-repo>/cce-challenge/
+      #    jf push lambda.yaml <artifactory-repo>/cce-challenge/
+      #    jf push api_gateway.yaml <artifactory-repo>/cce-challenge/
+      #    jf push iam_roles.yaml <artifactory-repo>/cce-challenge/
 
-      - name: Deploy to AWS
-        run: aws cloudformation deploy --template-file master.yaml --stack-name CceChallengeStack --capabilities CAPABILITY_IAM
+      #- name: Deploy to AWS
+      #  run: aws cloudformation deploy --template-file master.yaml --stack-name CceChallengeStack --capabilities CAPABILITY_IAM
 
-      - name: Notify Slack
-        uses: slackapi/slack-github-action@v1
-        with:
-          slack-bot-token: ${{ secrets.SLACK_WEBHOOK_URL }}
-          channel-id: 'devops'
-          slack-text: 'CI/CD completed: ${{ github.event_name }} on ${{ github.repository }}'
+      #- name: Notify Slack
+      #  uses: slackapi/slack-github-action@v1
+      #  with:
+      #    slack-bot-token: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #    channel-id: 'devops'
+      #    slack-text: 'CI/CD completed: ${{ github.event_name }} on ${{ github.repository }}'

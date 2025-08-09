@@ -27,17 +27,11 @@ Resources:
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
-        Type: AWS
+        Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StoreDataFunctionArn}/invocations
-        IntegrationResponses:
-          - StatusCode: 200
-            ResponseTemplates:
-              application/json: ''
       MethodResponses:
         - StatusCode: 200
-          ResponseModels:
-            application/json: Empty
 
   ApiGatewayPermission:
     Type: AWS::Lambda::Permission
@@ -63,6 +57,7 @@ Resources:
 
 Outputs:
   ApiEndpoint:
+    Description: "API Gateway endpoint URL"
     Value: !Sub https://${DataApi}.execute-api.${AWS::Region}.amazonaws.com/prod/data
     Export:
-      Name: !Sub ${AWS::StackName}-ApiEndpoint
+      Name: CceChallengeStack-ApiEndpoint

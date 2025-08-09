@@ -11,7 +11,7 @@ Resources:
   StoreDataFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: store_data.handler
+      Handler: index.handler
       Runtime: python3.9
       Code:
         ZipFile: |
@@ -19,13 +19,20 @@ Resources:
           import boto3
           import uuid
           import os
+
           dynamodb = boto3.resource("dynamodb")
           table = dynamodb.Table(os.environ["TABLE_NAME"])
+
           def handler(event, context):
               try:
-                  body = json.loads(event["body"])
+                  if "body" in event:
+                      body = json.loads(event["body"])
+                  else:
+                      body = event  # fallback no-proxy
+
                   item = {"id": str(uuid.uuid4()), **body}
                   table.put_item(Item=item)
+
                   return {
                       "statusCode": 200,
                       "body": json.dumps({"message": "Data stored successfully", "id": item["id"]})
@@ -38,11 +45,12 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTableName
-      Role: !ImportValue !Sub ${AWS::StackName}-StoreDataFunctionRoleArn
+      Role: 
+        Fn::ImportValue: CceChallengeStack-StoreDataFunctionRoleArn
       Timeout: 30
 
 Outputs:
   StoreDataFunctionArn:
     Value: !GetAtt StoreDataFunction.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-StoreDataFunctionArn
+      Name: CceChallengeStack-StoreDataFunctionArn

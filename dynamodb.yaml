@@ -17,8 +17,9 @@ Outputs:
   DataTableArn:
     Value: !GetAtt DataTable.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-DataTableArn
+      Name: CceChallengeStack-DataTableArn
   DataTableName:
     Value: !Ref DataTable
     Export:
-      Name: !Sub ${AWS::StackName}-DataTableName
+      Name: CceChallengeStack-DataTableName
+

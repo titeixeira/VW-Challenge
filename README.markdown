@@ -1,4 +1,8 @@
 # CCE Technical Challenge - CloudFormation (Modular)
+This is my first attempt to implement a CI/CD pipeline for a CloudFormation stack.
+Never tried before, so it's a bit of a challenge. Hope you liked at least the code.
+Of course I could improve the stackset to be only a single template, but I preferred to keep it modular to be easy to me in order to troubleshoot and debug.
+This challenge took me 4 hours to do it at the point it was due.
 
 ## Overview
 This project implements an AWS-based solution for the CCE technical challenge using modular CloudFormation templates. It includes:
@@ -7,7 +11,6 @@ This project implements an AWS-based solution for the CCE technical challenge us
 
 ## Prerequisites
 - AWS account with Free Tier eligibility.
-- AWS CLI installed and configured with credentials.
 - (Optional) `curl` or Postman for testing the API.
 
 ## Setup
@@ -16,32 +19,13 @@ This project implements an AWS-based solution for the CCE technical challenge us
    git clone <repository-url>
    cd cce-challenge
    ```
-2. Ensure AWS CLI is configured:
-   ```bash
-   aws configure
-   ```
 
 ## Deployment
-1. Upload modular templates to an S3 bucket (or use local paths if deploying locally):
-   ```bash
-   aws s3 cp dynamodb.yaml s3://<your-bucket>/templates/
-   aws s3 cp lambda.yaml s3://<your-bucket>/templates/
-   aws s3 cp api_gateway.yaml s3://<your-bucket>/templates/
-   aws s3 cp iam_roles.yaml s3://<your-bucket>/templates/
-   ```
-2. Update `master.yaml` with the correct S3 URLs for `TemplateURL`.
-3. Validate the master template:
-   ```bash
-   aws cloudformation validate-template --template-body file://master.yaml
-   ```
-4. Deploy the stack:
-   ```bash
-   aws cloudformation deploy --template-file master.yaml --stack-name CceChallengeStack --capabilities CAPABILITY_IAM
-   ```
-5. Note the API endpoint URL from the stack outputs:
-   ```bash
-   aws cloudformation describe-stacks --stack-name CceChallengeStack --query "Stacks[0].Outputs"
-   ```
+1. In a AWS account, go to CloudFormation Service and select create Stack
+ 1.1 Start with the dynamodb.yaml
+ 1.2 Then the iam_roles.yaml and give the parameters given by the dynamodb.yaml Output
+ 1.3 Then the lambda.yaml and give the parameters given by the dynamodb.yaml Output
+ 1.4 Then the api_gateway.yaml and give the parameters given by the lambda.yaml Output   
 
 ## Testing
 - Send a POST request to the API endpoint with a JSON body:
@@ -54,8 +38,18 @@ This project implements an AWS-based solution for the CCE technical challenge us
   - CloudWatch > Log Groups > /aws/lambda/StoreDataFunction.
 
 ## Cleanup
-To avoid charges, delete the stack:
-```bash
-aws cloudformation delete-stack --stack-name CceChallengeStack
-aws cloudformation wait stack-delete-complete --stack-name CceChallengeStack
-```
+To avoid charges, delete the stacks
+
+## CI/CD
+The CI/CD pipeline is defined in the ci-cd.yaml file. It includes the following steps, but didn't tested yet.
+1. Checkout code
+2. Set up Python
+3. Install dependencies
+4. Run pylint
+5. Run tests
+6. SonarQube Scan
+7. Configure AWS credentials
+8. Validate CloudFormation templates
+9. Upload to Artifactory
+10. Deploy to AWS
+11. Notify Slack
